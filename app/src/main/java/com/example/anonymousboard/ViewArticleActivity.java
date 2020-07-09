@@ -24,7 +24,7 @@ import java.net.URL;
 public class ViewArticleActivity extends AppCompatActivity {
     public static Handler handler;
     Button btnWrite, btnSearch;
-    ListView list;
+    public static ListView list;
     EditText txtSearch;
     public static ArticleAdapter adapter;
     public static String[][] storage;
@@ -38,7 +38,7 @@ public class ViewArticleActivity extends AppCompatActivity {
         adapter = new ArticleAdapter();
         list.setAdapter(adapter);
         boardLoad();
-        adapter.notifyDataSetChanged();
+        list.setAdapter(adapter);
 
         btnWrite = (Button)findViewById(R.id.btnWrite);
         btnSearch = (Button)findViewById(R.id.btnSearch);
@@ -68,7 +68,6 @@ public class ViewArticleActivity extends AppCompatActivity {
                 try {
 
                     adapter.clear();
-                    adapter.notifyDataSetChanged();
                     final URL url = new URL("Http://andy1279.dothome.co.kr/listArticle.php/");
                     final HttpURLConnection http = (HttpURLConnection)url.openConnection();
                     http.setDefaultUseCaches(false);
@@ -112,13 +111,11 @@ public class ViewArticleActivity extends AppCompatActivity {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            adapter.notifyDataSetChanged();
+                            list.setAdapter(adapter);
                         }
                     });
                 } catch(Exception e) {
-                    adapter.notifyDataSetChanged();
                     SearchArticle(strSearch);
-                    adapter.notifyDataSetChanged();
                     //Log.e("Error", "실행도중 문제가 발생했습니다. 확인 후 수정바랍니다.", e);
                 }
             }
@@ -132,7 +129,6 @@ public class ViewArticleActivity extends AppCompatActivity {
                 try {
 
                     adapter.clear();
-                    adapter.notifyDataSetChanged();
                     final URL url = new URL("Http://andy1279.dothome.co.kr/listArticle.php/");
                     final HttpURLConnection http = (HttpURLConnection)url.openConnection();
                     http.setDefaultUseCaches(false);
@@ -141,11 +137,6 @@ public class ViewArticleActivity extends AppCompatActivity {
 
                     http.setRequestMethod("POST");
                     http.setRequestProperty("content-type", "application/x-www-form-urlencoded");
-                    //StringBuffer buffer = new StringBuffer();
-                    //buffer.append("name").append("=").append("");
-                    //OutputStreamWriter osw = new OutputStreamWriter(http.getOutputStream(),"UTF-8");
-                   // osw.write(buffer.toString());
-                    //osw.flush();
 
                     final BufferedReader reader = new BufferedReader(new InputStreamReader(http.getInputStream()));
                     StringBuilder builder = new StringBuilder();
@@ -158,7 +149,7 @@ public class ViewArticleActivity extends AppCompatActivity {
 
                     final int firstArraySize = resultData.split("¿").length;
                     Log.e("Error", "FirstArraySize = " + firstArraySize);
-                    final int secondArraySize = 3; // The number of table property
+                    final int secondArraySize = 3;
                     storage = new String[firstArraySize][secondArraySize];
                     String[] oneArray = resultData.split("¿");
                     for(int i = 0; i < firstArraySize; i++) {
@@ -176,11 +167,10 @@ public class ViewArticleActivity extends AppCompatActivity {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            adapter.notifyDataSetChanged();
+                            list.setAdapter(adapter);
                         }
                     });
                 } catch(Exception e) {
-                    adapter.notifyDataSetChanged();
                     boardLoad();
                     //Log.e("Error", "실행도중 문제가 발생했습니다. 확인 후 수정바랍니다.", e);
                 }
