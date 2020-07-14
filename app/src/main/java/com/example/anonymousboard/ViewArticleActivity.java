@@ -1,19 +1,31 @@
 package com.example.anonymousboard;
 
+import android.app.Activity;
 import android.content.Intent;
+
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -22,23 +34,26 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class ViewArticleActivity extends AppCompatActivity {
-    public static Handler handler;
+    Handler handler;
+    ArticleAdapter adapter;
+    String[][] storage;
+    ListView list;
     Button btnWrite, btnSearch;
-    public static ListView list;
     EditText txtSearch;
-    public static ArticleAdapter adapter;
-    public static String[][] storage;
+
+    SwipeRefreshLayout pullToRefresh;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewarticle);
         handler = new Handler();
+        pullToRefresh = (SwipeRefreshLayout) findViewById(R.id.pullToRefresh);
 
         list = (ListView)findViewById(R.id.articleList);
         adapter = new ArticleAdapter();
         list.setAdapter(adapter);
-        boardLoad();
-        list.setAdapter(adapter);
+        boardLoad(handler, adapter, list);
+        adapter.notifyDataSetChanged();
 
         btnWrite = (Button)findViewById(R.id.btnWrite);
         btnSearch = (Button)findViewById(R.id.btnSearch);
@@ -54,13 +69,39 @@ public class ViewArticleActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View view) {
-                SearchArticle(txtSearch.getText().toString());
+                SearchArticle(handler, adapter, list, txtSearch.getText().toString());
             }
         });
 
+        list.setOnItemClickListener(new ListView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Article_LvItem item = (Article_LvItem)list.getItemAtPosition(i);
+                Intent intent = new Intent(ViewArticleActivity.this, ReadArticleActivity.class);
+                intent.putExtra("no", item.getNo());
+                Log.e("no", item.getNo());
+                intent.putExtra("title", item.getTitle());
+                intent.putExtra("content", item.getContent());
+                intent.putExtra("writer", item.getWriter());
+                intent.putExtra("postdate", item.getDate());
+                startActivity(intent);
+            }
+
+        });
+        pullToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+
+            @Override
+            public void onRefresh() {
+                //Here you can update your data from internet or from local SQLite data
+                boardLoad(handler, adapter, list);
+                pullToRefresh.setRefreshing(false);
+            }
+        });
 
     }
-    public static void SearchArticle(final String strSearch) {
+
+    public static void SearchArticle(final Handler handler, final ArticleAdapter adapter, final ListView list, final String strSearch) {
         new Thread() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
@@ -88,25 +129,13 @@ public class ViewArticleActivity extends AppCompatActivity {
                     while((str = reader.readLine())!=null) {
                         builder.append(str);
                     }
-                    final String resultData = builder.toString();
-                    Log.e("Error", resultData);
-
-                    final int firstArraySize = resultData.split("¿").length;
-                    Log.e("Error", "FirstArraySize = " + firstArraySize);
-                    final int secondArraySize = 3; // The number of table property
-                    storage = new String[firstArraySize][secondArraySize];
-                    String[] oneArray = resultData.split("¿");
-                    for(int i = 0; i < firstArraySize; i++) {
-                        String[] tmps = oneArray[i].split("/");
-                        for(int j = 0; j < secondArraySize; j++) {
-                            storage[i][j] = tmps[j];
+                    JSONObject obj = new JSONObject(builder.toString());
+                    try {
+                        JSONArray arr = obj.getJSONArray("return");
+                        for (int i = 0; i < arr.length(); i++) {
+                            adapter.addItem(arr.getJSONObject(i).getString("NO"), arr.getJSONObject(i).getString("TITLE"), arr.getJSONObject(i).getString("CONTENT"), arr.getJSONObject(i).getString("WRITER"), arr.getJSONObject(i).getString("POSTDATE"));
                         }
-                    }
-
-                    for(int i = 0; i < storage.length; i++) {
-                        Log.e("Error", "AddItem: Param1 : " + storage[i][0] + ", Param2 : " + storage[i][1] + ", Param3 : " + storage[i][2]);
-                        adapter.addItem(storage[i][0], storage[i][1], storage[i][2]);
-
+                    } catch(JSONException e) {
                     }
                     handler.post(new Runnable() {
                         @Override
@@ -115,13 +144,13 @@ public class ViewArticleActivity extends AppCompatActivity {
                         }
                     });
                 } catch(Exception e) {
-                    SearchArticle(strSearch);
+                    SearchArticle(handler, adapter, list, strSearch);
                     //Log.e("Error", "실행도중 문제가 발생했습니다. 확인 후 수정바랍니다.", e);
                 }
             }
         }.start();
     }
-    public static void boardLoad() {
+    public static void boardLoad(final Handler handler, final ArticleAdapter adapter, final ListView list) {
         new Thread() {
             @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
@@ -144,25 +173,14 @@ public class ViewArticleActivity extends AppCompatActivity {
                     while((str = reader.readLine())!=null) {
                         builder.append(str);
                     }
-                    final String resultData = builder.toString();
-                    Log.e("Error", resultData);
+                    JSONObject obj = new JSONObject(builder.toString());
+                    try {
+                        JSONArray arr = obj.getJSONArray("return");
+                        for (int i = 0; i < arr.length(); i++) {
 
-                    final int firstArraySize = resultData.split("¿").length;
-                    Log.e("Error", "FirstArraySize = " + firstArraySize);
-                    final int secondArraySize = 3;
-                    storage = new String[firstArraySize][secondArraySize];
-                    String[] oneArray = resultData.split("¿");
-                    for(int i = 0; i < firstArraySize; i++) {
-                        String[] tmps = oneArray[i].split("/");
-                        for(int j = 0; j < secondArraySize; j++) {
-                            storage[i][j] = tmps[j];
+                            adapter.addItem(arr.getJSONObject(i).getString("NO"), arr.getJSONObject(i).getString("TITLE"), arr.getJSONObject(i).getString("CONTENT"), arr.getJSONObject(i).getString("WRITER"), arr.getJSONObject(i).getString("POSTDATE"));
                         }
-                    }
-
-                    for(int i = 0; i < storage.length; i++) {
-                        Log.e("Error", "AddItem: Param1 : " + storage[i][0] + ", Param2 : " + storage[i][1] + ", Param3 : " + storage[i][2]);
-                        adapter.addItem(storage[i][0], storage[i][1], storage[i][2]);
-
+                    } catch(JSONException e) {
                     }
                     handler.post(new Runnable() {
                         @Override
@@ -171,7 +189,7 @@ public class ViewArticleActivity extends AppCompatActivity {
                         }
                     });
                 } catch(Exception e) {
-                    boardLoad();
+                    boardLoad(handler, adapter, list);
                     //Log.e("Error", "실행도중 문제가 발생했습니다. 확인 후 수정바랍니다.", e);
                 }
             }
