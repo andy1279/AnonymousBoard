@@ -14,6 +14,9 @@ import android.widget.Toast;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -57,8 +60,14 @@ public class WriteArticleActivity extends AppCompatActivity {
                     http.setDoOutput(true);
                     http.setRequestMethod("POST");
                     http.setRequestProperty("content-type", "application/x-www-form-urlencoded");
-                    StringBuffer buffer = new StringBuffer();
-                    buffer.append("id=").append(id).append("&title=").append(title).append("&content=").append(content);
+
+
+                    JSONObject buffer = new JSONObject();
+                    buffer.put("id", id);
+                    buffer.put("title", title);
+                    buffer.put("content", content);
+
+
                     OutputStreamWriter osw = new OutputStreamWriter(http.getOutputStream(),"UTF-8");
                     osw.write(buffer.toString());
                     osw.flush();
@@ -76,7 +85,7 @@ public class WriteArticleActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             Toast.makeText(WriteArticleActivity.this, "작성 완료되었습니다.", Toast.LENGTH_SHORT).show();
-                            ViewArticleActivity.boardLoad();
+                            //ViewArticleActivity.boardLoad();
                             finish();
                         }
                     });

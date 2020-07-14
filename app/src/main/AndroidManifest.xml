@@ -10,10 +10,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+
         <activity android:name=".WriteArticleActivity" />
         <activity android:name=".LoginActivity" />
         <activity android:name=".ViewArticleActivity" />
         <activity android:name=".JoinActivity" />
+        <activity android:name=".ReadArticleActivity"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

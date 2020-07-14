@@ -12,6 +12,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -66,8 +68,9 @@ public class LoginActivity extends AppCompatActivity {
                     http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                     http.connect();
 
-                    StringBuffer buffer = new StringBuffer();
-                    buffer.append("id=").append(Id).append("&pw=").append(Pw);
+                    JSONObject buffer = new JSONObject();
+                    buffer.put("id", Id);
+                    buffer.put("pw", Pw);
                     OutputStreamWriter osw = new OutputStreamWriter(http.getOutputStream(), "UTF-8");
                     osw.write(buffer.toString());
                     osw.flush();

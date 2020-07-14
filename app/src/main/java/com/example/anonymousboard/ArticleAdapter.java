@@ -12,21 +12,21 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 public class ArticleAdapter extends BaseAdapter {
-    ArrayList<Article_LvItem> itemlist = new ArrayList<>();
-    @Override
-    public int getCount() {
-        return itemlist.size();
-    }
+        ArrayList<Article_LvItem> itemlist = new ArrayList<>();
+        @Override
+        public int getCount() {
+            return itemlist.size();
+        }
 
-    @Override
-    public Object getItem(int i) {
-        return itemlist.get(i);
-    }
+        @Override
+        public Object getItem(int i) {
+            return itemlist.get(i);
+        }
 
-    @Override
-    public long getItemId(int i) {
-        return i;
-    }
+        @Override
+        public long getItemId(int i) {
+            return i;
+        }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
@@ -51,12 +51,13 @@ public class ArticleAdapter extends BaseAdapter {
     {
         itemlist.clear();
     }
-    public void addItem(String title, String content, String date) {
+    public void addItem(String no, String title, String content, String writer, String date) {
         Article_LvItem item = new Article_LvItem();
+        item.setNo(no);
         item.setTitle(title);
         item.setContent(content);
+        item.setWriter(writer);
         item.setDate(date);
-
         itemlist.add(item);
     }
 }
